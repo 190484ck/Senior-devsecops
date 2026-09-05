@@ -1,0 +1,48 @@
+1 #before fix
+2
+3
+4 apiVersion: apps/v1
+5 kind: Deployment
+6 metadata: {name: accounts-api}
+7 spec:
+8 template:
+9 spec:
+10 hostNetwork: true
+11 containers:
+12 - name: api
+13 image: 123456789012.dkr.ecr.ap-south-1.amazonaws.com/accounts-api:latest
+14 securityContext: {runAsUser: 0}
+15 volumes:
+16 - name: docker-sock
+17 hostPath: {path: /var/run/docker.sock}
+18 ---
+19 apiVersion: rbac.authorization.k8s.io/v1
+20 kind: Role
+21 metadata: {name: accounts-api}
+22 rules:
+23 - apiGroups: [""]
+24 resources: ["secrets", "pods", "configmaps"]
+25 verbs: ["*"]
+26
+27
+28
+29 ---
+30
+31 #pass after
+32
+33 apiVersion: apps/v1
+34 kind: Deployment
+35 metadata: {name: accounts-api}
+36 spec:
+37 template:
+38 spec:
+39 hostNetwork: false
+40 containers:
+41 - name: api
+42 image:
+123456789012.dkr.ecr.ap-south-1.amazonaws.com/accounts-api@sha256:aaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+43 securityContext: {runAsNonRoot: true, runAsUser: 10001}
+44 volumes:
+45 - {name: tmp, emptyDir: {}}
+46
