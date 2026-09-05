@@ -1,0 +1,9 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {"Effect":"Allow","Action":["secretsmanager:GetSecretValue"],"Resource":"arn:aws:secretsmanager:ap-south-1:111122223333:secret:accounts/prod/db-*"},
+    {"Effect":"Allow","Action":["kms:Decrypt"],"Resource":"arn:aws:kms:ap-south-1:111122223333:key/REPLACE-WITH-KEY-ID","Condition":{"StringEquals":{"kms:ViaService":"secretsmanager.ap-south-1.amazonaws.com"}}},
+    {"Effect":"Allow","Action":["kinesis:GetShardIterator","kinesis:GetRecords","kinesis:DescribeStreamSummary"],"Resource":"arn:aws:kinesis:ap-south-1:111122223333:stream/accounts-events-prod"},
+    {"Effect":"Allow","Action":["kinesis:PutRecord","kinesis:PutRecords"],"Resource":"arn:aws:kinesis:ap-south-1:111122223333:stream/accounts-audit-prod"}
+  ]
+}
