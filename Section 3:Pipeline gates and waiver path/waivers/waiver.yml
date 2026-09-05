@@ -1,0 +1,9 @@
+id: EXAMPLE-HIGH-FINDING
+repository: acme/accounts-api
+path: src/vendor/example.go
+rule: example-rule
+owner: platform
+approvers: [platform-engineer-1, platform-engineer-2]
+reason: Upstream fix scheduled and vulnerable path is unreachable.
+compensating_control: Admission and network controls restrict exposure.
+expires_at: 2026-10-01T00:00:00Z
