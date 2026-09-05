@@ -1,0 +1,9 @@
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata: {name: accounts-api-baseline}
+policies: [../kyverno-policy.yaml]
+resources: [bad-deployment.yaml]
+results:
+  - {policy: accounts-api-baseline, rule: no-host-network, resource: accounts-api, result: fail}
+  - {policy: accounts-api-baseline, rule: non-root-no-escalation, resource: accounts-api, result: fail}
+  - {policy: accounts-api-baseline, rule: digest-pinned, resource: accounts-api, result: fail}
