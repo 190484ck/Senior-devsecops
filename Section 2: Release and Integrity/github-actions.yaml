@@ -1,0 +1,86 @@
+name: accounts-api-secure-build
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+  packages: write
+  security-events: write
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REPOSITORY: accounts-api
+  IMAGE: 111122223333.dkr.ecr.ap-south-1.amazonaws.com/accounts-api
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Full history secrets
+        uses: gitleaks/gitleaks-action@v2
+        env: {GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}}
+        with: {args: git . --redact --log-opts="--all"}
+      - name: SAST
+        uses: semgrep/semgrep-action@v1
+        with: {config: p/ci}
+      - name: SCA
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: 1
+          ignore-unfixed: true
+      - name: IaC
+        uses: bridgecrewio/checkov-action@v12
+        with: {directory: section-4/terraform/fixed, framework: terraform, soft_fail: false}
+      - name: Waiver expiry
+        run: python3 section-3/waivers/check_waivers.py
+
+  release:
+    if: github.event_name == 'push'
+    needs: gates
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::111122223333:role/github-accounts-api-production
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: aws-actions/amazon-ecr-login@v2
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:build-${{ github.run_id }}-${{ github.run_attempt }}
+          provenance: true
+          sbom: true
+      - uses: anchore/sbom-action/download-syft@v0
+      - run: syft "${IMAGE}@${{ steps.build.outputs.digest }}" -o spdx-json=sbom.spdx.json
+      - uses: actions/attest-sbom@v2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          sbom-path: sbom.spdx.json
+          push-to-registry: true
+      - uses: sigstore/cosign-installer@v3
+      - run: cosign sign --yes "${IMAGE}@${{ steps.build.outputs.digest }}"
+        env: {COSIGN_EXPERIMENTAL: "1"}
+      - name: Verify signature
+        run: |
+          cosign verify             --certificate-identity-regexp '^https://github.com/acme/accounts-api/.github/workflows/.*@refs/heads/main$'             --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'             "${IMAGE}@${{ steps.build.outputs.digest }}"
+        env: {COSIGN_EXPERIMENTAL: "1"}
+      - name: Verify ECR immutable
+        run: |
+          test "$(aws ecr describe-repositories --repository-names "$ECR_REPOSITORY"             --query 'repositories[0].imageTagMutability' --output text)" = "IMMUTABLE"
