@@ -1,0 +1,39 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata: {name: accounts-api-baseline}
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: no-host-network
+      match: {any: [{resources: {kinds: ["Deployment"], namespaces: ["accounts"]}}]}
+      validate:
+        message: hostNetwork must be false.
+        pattern: {spec: {template: {spec: {hostNetwork: false}}}}
+    - name: non-root-no-escalation
+      match: {any: [{resources: {kinds: ["Deployment"], namespaces: ["accounts"]}}]}
+      validate:
+        message: containers must be non-root and unable to escalate.
+        pattern:
+          spec:
+            template:
+              spec:
+                containers:
+                  - securityContext: {runAsNonRoot: true, allowPrivilegeEscalation: false, privileged: false}
+    - name: digest-pinned
+      match: {any: [{resources: {kinds: ["Deployment"], namespaces: ["accounts"]}}]}
+      validate:
+        message: image must be digest pinned.
+        foreach:
+          - list: "request.object.spec.template.spec.containers[]"
+            pattern: {image: "*@sha256:*"}
+    - name: no-hostpath
+      match: {any: [{resources: {kinds: ["Deployment"], namespaces: ["accounts"]}}]}
+      validate:
+        message: hostPath is forbidden.
+        deny:
+          conditions:
+            any:
+              - key: "{{ request.object.spec.template.spec.volumes[].hostPath }}"
+                operator: AnyIn
+                value: ["*"]
