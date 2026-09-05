@@ -1,0 +1,22 @@
+#before fix
+
+resource:
+  aws_db_instance:
+    accounts: {publicly_accessible: true, storage_encrypted: false, skip_final_snapshot: true, backup_retention_period: 0}
+  aws_security_group_rule:
+    db_ingress: {type: ingress, from_port: 5432, to_port: 5432, cidr_blocks: ["0.0.0.0/0"]}
+  aws_cloudtrail:
+    org: {is_multi_region_trail: false, enable_log_file_validation: false, include_global_service_events: false} 
+    
+    
+    
+---
+#pass after
+
+resource:
+  aws_db_instance:
+    accounts: {publicly_accessible: false, storage_encrypted: true, skip_final_snapshot: false, backup_retention_period: 30}
+  aws_security_group_rule:
+    db_ingress: {type: ingress, from_port: 5432, to_port: 5432, cidr_blocks: ["10.20.0.0/16"]}
+  aws_cloudtrail:
+    org: {is_multi_region_trail: true, enable_log_file_validation: true, include_global_service_events: true}
