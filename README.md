@@ -8,10 +8,10 @@ Based on the supplied reference scenario. The reference explicitly permits local
 ## Reviewer commands
 
 ```bash
-conftest test --policy section-4/kubernetes/policy/kubernetes.rego section-4/kubernetes/tests/bad.yaml
-conftest test --policy section-4/kubernetes/policy/kubernetes.rego section-4/kubernetes/tests/good.yaml
-conftest test --policy section-4/terraform/policy/terraform.rego section-4/terraform/tests/bad.yaml
-conftest test --policy section-4/terraform/policy/terraform.rego section-4/terraform/tests/good.yaml
+conftest test --policy section-4/kubernetes/policy/kubernetes.rego section-4/kubernetes/tests/test.yaml
+
+conftest test --policy section-4/terraform/policy/terraform.rego section-4/terraform/tests/teststf.yaml
+
 kyverno test section-5/admission/kyverno-tests
 terraform -chdir=section-4/terraform/fixed init -backend=false
 terraform -chdir=section-4/terraform/fixed validate
@@ -52,12 +52,10 @@ The signature proves provenance/integrity of the signed digest. It does not prov
 - section-3-pipeline-gates/break-glass.md
 - section-4-review-remediate/workload/fixed-accounts-api.yaml
 - section-4-review-remediate/workload/policy/kubernetes.rego
-- section-4-review-remediate/workload/tests/bad.yaml
-- section-4-review-remediate/workload/tests/good.yaml
+- section-4-review-remediate/workload/tests/test.yaml
 - section-4-review-remediate/terraform/fixed/rds-cloudtrail.tf
 - section-4-review-remediate/terraform/policy/terraform.rego
-- section-4-review-remediate/terraform/tests/bad.yaml
-- section-4-review-remediate/terraform/tests/good.yaml
+- section-4-review-remediate/terraform/tests/testtf.yaml
 - section-4-review-remediate/iam/accounts-api-pod-policy.json
 - section-4-review-remediate/review-findings.md
 - sector-5-admission-runtime/admission/kyverno-tests/kyverno-policy.yaml
